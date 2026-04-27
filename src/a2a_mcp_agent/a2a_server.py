@@ -100,6 +100,8 @@ def get_agent_card() -> dict[str, Any]:
         "url": f"http://{settings.a2a_host}:{settings.a2a_port}",
         "version": "0.1.0",
         "capabilities": {
+            "A2A": True,
+            "MCP": True,
             "streaming": True,
             "pushNotifications": False,
             "stateTransitionCallback": False,
@@ -154,14 +156,17 @@ async def health() -> dict[str, str]:
 @app.post("/tasks/send", response_model=TaskResponse)
 async def send_task(request: TaskRequest) -> TaskResponse:
     """Send a task to the agent."""
+    # Validate request shape first so callers get a 400 even before the agent
+    # is initialized — the alternative (503 hiding a malformed payload) is
+    # confusing during development.
+    message_content = request.message.get("content", "")
+    if not message_content:
+        raise HTTPException(status_code=400, detail="Message content is required")
+
     if not agent:
         raise HTTPException(status_code=503, detail="Agent not initialized")
-    
+
     try:
-        # Extract message content
-        message_content = request.message.get("content", "")
-        if not message_content:
-            raise HTTPException(status_code=400, detail="Message content is required")
         
         # Process task
         result = await agent.process_task(

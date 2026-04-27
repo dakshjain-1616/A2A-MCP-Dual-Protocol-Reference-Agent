@@ -26,7 +26,9 @@ class DeepSeekClient:
         self.api_key = api_key or settings.deepseek_api_key
         self.base_url = base_url or settings.deepseek_base_url
         self.model = settings.deepseek_model
-        self.mock_mode = settings.is_mock_mode
+        # Mock mode is on if the global toggle is set OR no api_key is available
+        # via either the constructor or settings.
+        self.mock_mode = settings.mock_mode or not self.api_key
         
         if not self.mock_mode and self.api_key:
             self.client = AsyncOpenAI(

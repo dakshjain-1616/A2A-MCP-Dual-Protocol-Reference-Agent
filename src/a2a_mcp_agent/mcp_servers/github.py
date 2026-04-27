@@ -329,11 +329,19 @@ async def _handle_get_readme(
 
 class GitHubServer:
     """GitHub MCP Server wrapper."""
-    
+
     def __init__(self) -> None:
         """Initialize the server."""
         self.name = "github-server"
-    
+
+    async def list_tools(self) -> list[Tool]:
+        """Proxy to module-level list_tools."""
+        return await list_tools()
+
+    async def call_tool(self, name: str, arguments: dict[str, Any]) -> list[TextContent]:
+        """Proxy to module-level call_tool."""
+        return await call_tool(name, arguments)
+
     async def run(self) -> None:
         """Run the server."""
         async with stdio_server(server) as (read_stream, write_stream):

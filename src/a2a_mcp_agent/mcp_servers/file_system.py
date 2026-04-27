@@ -194,14 +194,56 @@ async def _handle_delete_file(arguments: dict[str, Any]) -> list[TextContent]:
 
 class FileSystemServer:
     """File System MCP Server wrapper."""
-    
+
     def __init__(self, base_dir: str = "/tmp/mcp_files") -> None:
         """Initialize the server."""
         self.name = "file-system-server"
+        self.base_dir = Path(base_dir).resolve()
         global BASE_DIR
-        BASE_DIR = Path(base_dir)
-        BASE_DIR.mkdir(parents=True, exist_ok=True)
-    
+        BASE_DIR = self.base_dir
+        self.base_dir.mkdir(parents=True, exist_ok=True)
+
+    def _resolve_path(self, rel_path: str) -> Path:
+        """Resolve a relative path inside this server's base_dir, with traversal protection."""
+        abs_path = (self.base_dir / rel_path).resolve()
+        if not str(abs_path).startswith(str(self.base_dir)):
+            raise ValueError("Path traversal detected")
+        return abs_path
+
+    async def list_tools(self) -> list[Tool]:
+        """Proxy to module-level list_tools."""
+        return await list_tools()
+
+    async def call_tool(self, name: str, arguments: dict[str, Any]) -> list[TextContent]:
+        """Proxy to module-level call_tool, scoping BASE_DIR to this instance."""
+        global BASE_DIR
+        prev = BASE_DIR
+        BASE_DIR = self.base_dir
+        try:
+            return await call_tool(name, arguments)
+        finally:
+            BASE_DIR = prev
+
+    async def _handle_read_file(self, arguments: dict[str, Any]) -> list[TextContent]:
+        """Instance proxy that pins BASE_DIR to this server."""
+        global BASE_DIR
+        prev = BASE_DIR
+        BASE_DIR = self.base_dir
+        try:
+            return await _handle_read_file(arguments)
+        finally:
+            BASE_DIR = prev
+
+    async def _handle_write_file(self, arguments: dict[str, Any]) -> list[TextContent]:
+        """Instance proxy that pins BASE_DIR to this server."""
+        global BASE_DIR
+        prev = BASE_DIR
+        BASE_DIR = self.base_dir
+        try:
+            return await _handle_write_file(arguments)
+        finally:
+            BASE_DIR = prev
+
     async def run(self) -> None:
         """Run the server."""
         async with stdio_server(server) as (read_stream, write_stream):

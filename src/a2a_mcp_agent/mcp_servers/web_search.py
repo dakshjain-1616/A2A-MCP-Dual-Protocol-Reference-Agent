@@ -141,11 +141,19 @@ async def _handle_get_page_content(arguments: dict[str, Any]) -> list[TextConten
 
 class WebSearchServer:
     """Web Search MCP Server wrapper."""
-    
+
     def __init__(self) -> None:
         """Initialize the server."""
         self.name = "web-search-server"
-    
+
+    async def list_tools(self) -> list[Tool]:
+        """Proxy to the module-level list_tools handler."""
+        return await list_tools()
+
+    async def call_tool(self, name: str, arguments: dict[str, Any]) -> list[TextContent]:
+        """Proxy to the module-level call_tool handler."""
+        return await call_tool(name, arguments)
+
     async def run(self) -> None:
         """Run the server."""
         async with stdio_server(server) as (read_stream, write_stream):

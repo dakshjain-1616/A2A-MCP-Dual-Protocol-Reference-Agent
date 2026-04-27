@@ -68,17 +68,16 @@ class TestA2AServer:
     @patch("a2a_mcp_agent.a2a_server.agent")
     def test_send_task_endpoint(self, mock_agent: MagicMock, client: TestClient) -> None:
         """Test task sending endpoint."""
-        # Setup mock agent
-        mock_agent_instance = MagicMock()
-        mock_agent_instance.process_task = AsyncMock(return_value={
+        # The patched `agent` IS the instance (the source uses it directly,
+        # not as a factory), so wire AsyncMock on the patched object itself.
+        mock_agent.process_task = AsyncMock(return_value={
             "success": True,
             "response": "Test response",
             "tool_calls_executed": 0,
             "tool_results": [],
             "usage": {"total_tokens": 100},
         })
-        mock_agent_instance.get_available_tools = MagicMock(return_value=[])
-        mock_agent.return_value = mock_agent_instance
+        mock_agent.get_available_tools = MagicMock(return_value=[])
         
         task_request = {
             "id": "test-task-1",
@@ -96,16 +95,14 @@ class TestA2AServer:
     @patch("a2a_mcp_agent.a2a_server.agent")
     def test_send_task_with_context(self, mock_agent: MagicMock, client: TestClient) -> None:
         """Test task sending with context."""
-        mock_agent_instance = MagicMock()
-        mock_agent_instance.process_task = AsyncMock(return_value={
+        mock_agent.process_task = AsyncMock(return_value={
             "success": True,
             "response": "Test response with context",
             "tool_calls_executed": 0,
             "tool_results": [],
             "usage": {},
         })
-        mock_agent_instance.get_available_tools = MagicMock(return_value=[])
-        mock_agent.return_value = mock_agent_instance
+        mock_agent.get_available_tools = MagicMock(return_value=[])
         
         task_request = {
             "id": "test-task-2",
