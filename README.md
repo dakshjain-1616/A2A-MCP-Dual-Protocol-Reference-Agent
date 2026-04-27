@@ -1,7 +1,6 @@
 # A2A + MCP Dual Protocol Reference Agent
 
-> Made Autonomously Using **NEO** — Your Autonomous AI Engineering Agent
-> [https://heyneo.com](https://heyneo.com)
+> Made Autonomously Using **[NEO](https://heyneo.com)** — Your Autonomous AI Engineering Agent
 
 [![Install for VS Code](https://img.shields.io/badge/NEO-VS%20Code%20Extension-blue?logo=visualstudiocode&logoColor=white)](https://marketplace.visualstudio.com/items?itemName=NeoResearchInc.heyneo)
 [![Install for Cursor](https://img.shields.io/badge/NEO-Cursor%20Extension-purple?logo=cursor&logoColor=white)](https://marketplace.cursorapi.com/items/?itemName=NeoResearchInc.heyneo)
@@ -21,53 +20,15 @@ A Gradio UI surfaces the full handshake live: A2A request log, MCP tool-call tim
 
 ## Architecture
 
-```mermaid
-flowchart LR
-    subgraph Caller["Other A2A Agent / Curl"]
-        EXT[POST /tasks/send<br/>GET /.well-known/agent-card.json]
-    end
+![Architecture](docs/diagrams/architecture.svg)
 
-    subgraph A2A["A2A Server — src/a2a_mcp_agent/a2a_server.py"]
-        ROUTE[FastAPI :8000]
-        CARD[agent-card.json]
-        TASK[Task lifecycle<br/>send → status → message]
-    end
+### Sequence: one task end-to-end
 
-    subgraph Agent["Reasoning Loop — src/a2a_mcp_agent/agent.py"]
-        LOOP[Plan → Tool-call → Observe → Reply]
-    end
+The full lifecycle of a single A2A task — from a calling agent's `POST /tasks/send`
+through the DeepSeek reasoning loop and an MCP tool round-trip, back to the
+final response:
 
-    subgraph LLM["DeepSeek Client — src/a2a_mcp_agent/deepseek_client.py"]
-        DS["deepseek-v4-flash<br/>https://api.deepseek.com/v1<br/>(--mock returns canned replies)"]
-    end
-
-    subgraph MCPHost["MCP Client — src/a2a_mcp_agent/mcp_client.py"]
-        STDIO[stdio multiplexer]
-    end
-
-    subgraph Tools["MCP Stdio Servers — src/a2a_mcp_agent/mcp_servers/"]
-        WS[web_search.py]
-        FS[file_system.py]
-        GH[github.py]
-    end
-
-    subgraph UI["Gradio UI — src/a2a_mcp_agent/ui.py :7860"]
-        P1[A2A handshake panel]
-        P2[MCP tool-call timeline]
-        P3[Reasoning stream]
-    end
-
-    EXT --> ROUTE
-    ROUTE --> CARD
-    ROUTE --> TASK
-    TASK --> LOOP
-    LOOP --> DS
-    LOOP --> STDIO
-    STDIO --> WS
-    STDIO --> FS
-    STDIO --> GH
-    LOOP --> UI
-```
+![A2A → Agent → MCP sequence](docs/diagrams/sequence.svg)
 
 ## Prerequisites
 
