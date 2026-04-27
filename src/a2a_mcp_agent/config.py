@@ -17,7 +17,13 @@ class Settings(BaseSettings):
         populate_by_name=True,
     )
 
-    # DeepSeek API Configuration
+    # OpenRouter (preferred — one key for all frontier models)
+    openrouter_api_key: Optional[str] = Field(default=None, alias="OPENROUTER_API_KEY")
+    openrouter_base_url: str = Field(
+        default="https://openrouter.ai/api/v1", alias="OPENROUTER_BASE_URL"
+    )
+
+    # Direct DeepSeek API (optional fallback if you have a Moonshot/DeepSeek key)
     deepseek_api_key: Optional[str] = Field(default=None, alias="DEEPSEEK_API_KEY")
     deepseek_base_url: str = Field(
         default="https://api.deepseek.com/v1", alias="DEEPSEEK_BASE_URL"
@@ -51,8 +57,22 @@ class Settings(BaseSettings):
 
     @property
     def is_mock_mode(self) -> bool:
-        """Check if running in mock mode."""
-        return self.mock_mode or not self.deepseek_api_key
+        """Check if running in mock mode.
+
+        Mock mode is on if explicitly enabled, or if no API key is configured
+        on either OpenRouter (preferred) or the direct DeepSeek path.
+        """
+        return self.mock_mode or not (self.openrouter_api_key or self.deepseek_api_key)
+
+    @property
+    def effective_api_key(self) -> Optional[str]:
+        """The API key to actually send. OpenRouter wins if both are set."""
+        return self.openrouter_api_key or self.deepseek_api_key
+
+    @property
+    def effective_base_url(self) -> str:
+        """The base URL paired with the effective API key."""
+        return self.openrouter_base_url if self.openrouter_api_key else self.deepseek_base_url
 
 
 @lru_cache()

@@ -73,7 +73,9 @@ flowchart LR
 
 - **Python**: 3.11 or newer
 - **OS**: Linux, macOS, or WSL2
-- **DeepSeek API key** (or run with `--mock` for offline testing)
+- **One LLM key** (or `--mock` for offline testing):
+  - **Recommended:** an OpenRouter key (`OPENROUTER_API_KEY`) — one key works for DeepSeek, Kimi, GLM, OpenAI, Anthropic, etc. Get one at [openrouter.ai/keys](https://openrouter.ai/keys).
+  - Alternative: a direct DeepSeek key (`DEEPSEEK_API_KEY`) from [platform.deepseek.com](https://platform.deepseek.com/).
 - Optional: `GITHUB_TOKEN` (GitHub MCP server), `SERPER_API_KEY` (web search)
 
 ## Installation
@@ -91,9 +93,11 @@ All knobs are environment variables (see `.env.example`):
 
 | Variable | Default | Purpose |
 |---|---|---|
-| `DEEPSEEK_API_KEY` | — (required unless `MOCK_MODE=true`) | DeepSeek auth. |
-| `DEEPSEEK_BASE_URL` | `https://api.deepseek.com/v1` | OpenAI-compatible endpoint. |
-| `DEEPSEEK_MODEL` | `deepseek-v4-flash` | Model id (April 2026). |
+| `OPENROUTER_API_KEY` | — | **Recommended.** One key for every frontier model (DeepSeek, Kimi, GLM, OpenAI, Anthropic, …). Used by default if set. |
+| `OPENROUTER_BASE_URL` | `https://openrouter.ai/api/v1` | Override for proxies. |
+| `DEEPSEEK_API_KEY` | — | Optional fallback if you have a direct DeepSeek key instead of OpenRouter. |
+| `DEEPSEEK_BASE_URL` | `https://api.deepseek.com/v1` | Direct-API endpoint (only used when `DEEPSEEK_API_KEY` is set without OpenRouter). |
+| `DEEPSEEK_MODEL` | `deepseek/deepseek-v4-flash` | Model id. Use the namespaced form on OpenRouter (`deepseek/deepseek-v4-flash`); use the bare form on the direct DeepSeek API (`deepseek-v4-flash`). |
 | `A2A_HOST` | `0.0.0.0` | A2A bind host. |
 | `A2A_PORT` | `8000` | A2A port. |
 | `A2A_DEBUG` | `false` | Enable FastAPI debug mode. |
@@ -185,7 +189,7 @@ In mock mode every tool returns deterministic canned data so the full agent loop
 
 | Model | Provider | Endpoint | Role | Notes |
 |---|---|---|---|---|
-| `deepseek-v4-flash` | DeepSeek | `https://api.deepseek.com/v1` | Sole inference model | April 2026, $0.14/M input tokens — cheapest frontier. |
+| `deepseek/deepseek-v4-flash` | DeepSeek (via OpenRouter or direct API) | `https://openrouter.ai/api/v1` (preferred) or `https://api.deepseek.com/v1` | Sole inference model | April 2026, $0.14/M input tokens — cheapest frontier. The same model id is reachable through OpenRouter (`deepseek/deepseek-v4-flash`) or the direct DeepSeek API (`deepseek-v4-flash`). |
 
 No other LLMs are referenced anywhere in code, config, comments, or docs.
 

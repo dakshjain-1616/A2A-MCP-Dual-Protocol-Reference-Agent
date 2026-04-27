@@ -23,11 +23,20 @@ class DeepSeekClient:
             base_url: API base URL (optional, uses settings if not provided)
         """
         settings = get_settings()
-        self.api_key = api_key or settings.deepseek_api_key
-        self.base_url = base_url or settings.deepseek_base_url
+        # OpenRouter is preferred (one key for many models). Fall back to direct
+        # DeepSeek if only that key is set. The constructor `api_key` argument
+        # short-circuits both for tests/integrations.
+        self.api_key = api_key or settings.effective_api_key
+        if base_url is not None:
+            self.base_url = base_url
+        elif api_key is not None:
+            # Caller provided a key but no URL — assume direct DeepSeek.
+            self.base_url = settings.deepseek_base_url
+        else:
+            self.base_url = settings.effective_base_url
+        # On OpenRouter the model id is namespaced; on the direct API it isn't.
+        # Configure via DEEPSEEK_MODEL env var (defaults to "deepseek-v4-flash").
         self.model = settings.deepseek_model
-        # Mock mode is on if the global toggle is set OR no api_key is available
-        # via either the constructor or settings.
         self.mock_mode = settings.mock_mode or not self.api_key
         
         if not self.mock_mode and self.api_key:
