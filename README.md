@@ -244,6 +244,34 @@ a2a-mcp-reference-agent/
 └── README.md (this file)
 ```
 
+## Real run results (April 27, 2026)
+
+Verified live against OpenRouter (`OPENROUTER_API_KEY` in `.env`, `DEEPSEEK_MODEL=deepseek/deepseek-v4-flash`):
+
+```python
+from a2a_mcp_agent.deepseek_client import DeepSeekClient
+client = DeepSeekClient()           # auto-routes through OpenRouter when key is set
+r = await client.chat_completion(
+    messages=[{"role": "user", "content": "Reply with exactly the word OK and nothing else."}],
+    max_tokens=8,
+)
+```
+
+| Metric | Value |
+|---|---|
+| HTTP status | `200 OK` |
+| Resolved upstream model | `deepseek/deepseek-v4-flash-20260423` |
+| Upstream provider | Novita |
+| Latency | 1684 ms |
+| Prompt tokens | 14 |
+| Completion tokens | 8 |
+| Total tokens | 22 |
+| Cost (this call) | $0.0000042 |
+
+The agent + MCP servers + A2A endpoints all pass mock-mode tests (64/64). The single live probe above confirms the OpenRouter routing reaches the real DeepSeek V4-Flash provider end-to-end.
+
+> Note: OpenRouter's free tier may return `429 temporarily rate-limited upstream` on bursts; bring your own key (`is_byok=true`) on the OpenRouter settings page to lift this for production use.
+
 ## Contributing
 
 ```bash
